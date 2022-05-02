@@ -1,0 +1,12 @@
+POST http://localhost:3333/auth/signin
+Content-Type: application/json
+
+{
+  "email":"mohamad@example.com",
+  "password": "a;ldkf84adfe57"
+}
+
+#####
+GET http://localhost:3333/api/users/626ecfbdd776aeceddeb7dc7
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MjZlY2ZiZGQ3NzZhZWNlZGRlYjdkYzciLCJpYXQiOjE2NTE0ODA2NTN9.YGy020IjfxtF4LuqV0RnvEwQELL_cZaZ5a_hPnsqBxE
