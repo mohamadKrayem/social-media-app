@@ -25,7 +25,8 @@ const requireSignin = expressJwt
 
 //check for authorization in the request
 function hasAuthorization(req, res, next){
-	const authorized = req.profile && req.auth && req.profile._id == req.auth._id
+
+	const authorized = req.params && req.auth && req.params.userId == req.auth._id
 	if(!authorized){
 		return res.status(403).json({
 			error: 'user is not authorized'
@@ -34,4 +35,4 @@ function hasAuthorization(req, res, next){
 	next();
 };
 
-module.exports={signin, signout, requireSignin, hasAuthorization}
+module.exports={requireSignin, hasAuthorization}

@@ -14,19 +14,27 @@ app.use(express.urlencoded({extended: true}));
 app.use(cookieParser());
 app.use(compress());
 app.use(helmet());
-app.use(router)
+// app.use(cors());
+
 require('./mongo');
 require('dotenv').config();
 
+
+app.use(express.json({ limit: "50mb" }));
+
 let corsOptions = {
 	origin: 'http://localhost:3000',
+	credentials: true,
 	optionsSuccessStatus: 200
 }
+app.use(cors(corsOptions))
+app.use(router)
 
 console.log('hello world')
 
+
 //just for test
-app.get('/', cors(corsOptions), function(req,res){
+app.get('/', cors(corsOptions),function(req,res){
 	res.status(200).send('hello react');
 	res.end()
 })
@@ -99,6 +107,15 @@ app.delete('/api/users/:userId', function(req,res, next){
 	User.findByIdAndRemove(req.params.userId)
 		.then(result => {res.status(204).end()})
 		.catch(err => next(err))
+})
+
+app.use((err, req, res, next) => {
+  if (err.name === 'UnauthorizedError') {
+    res.status(401).json({"error" : err.name + ": " + err.message})
+  }else if (err) {
+    res.status(400).json({"error" : err.name + ": " + err.message})
+    console.log(err)
+  }
 })
 
 const server = require('http').createServer(app);

@@ -4,12 +4,12 @@ const expressJwt = require('express-jwt');
 const User = require('../models/user');
 const controller = require('../controllers/auth.controller');
 require('dotenv').config()
-
 const router = express.Router();
 
 router.post('/auth/signin',
 	async function(req, res){
 		try{
+			console.log(req.body)
 			const {email, password} = req.body;
 			const user = await User.findByCredentials(email, password);
 			await user.save();
