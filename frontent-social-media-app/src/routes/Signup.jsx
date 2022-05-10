@@ -1,6 +1,8 @@
 import React, {useState} from 'react'
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { create } from '../operations/apiOperations';
+import axios from 'axios';
+import {HiPlusCircle} from 'react-icons/hi'
 
 const Signup = () => {
 
@@ -9,8 +11,14 @@ const Signup = () => {
     password: '',
     email: '',
     open: false,
-    error: ''
+    error: '',
+    about:'',
+    picture: ''
   });
+
+  const [image, setImage] = useState();
+  const [uploading, setUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
 
   function onChange(name){
     return function(event){
@@ -18,17 +26,51 @@ const Signup = () => {
     }
   }
 
-  function onSubmit(e){
+  async function onSubmit(e){
     e.preventDefault();
+
+    const url = await uploadImage();
+
     const user={
       name: values.name || undefined,
       email: values.email || undefined,
       password: values.password || undefined,
+      about: values.about || undefined,
+      picture: url || undefined
     };
 
     create(user).then(data=>{
       data.error ? setValues({...values, error: data.error}) : setValues({...values, error: '', open: true})
     })
+  }
+
+  function validateImage(event){
+    let file = event.target.files[0];
+    if(file.size >= 1048576) return alert("the images's size must be 1mb or less");
+    else {
+      setImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  }
+
+  async function uploadImage(){
+    const data = new FormData();
+    data.append('file', image);
+    data.append('upload_preset', 'xcyamjmn')
+    let url = '';
+
+    setUploading(true);
+    await axios.post("https://api.cloudinary.com/v1_1/dcr7zxnmn/image/upload",
+    data
+    ).then(response => {
+      setValues({...values, picture:response.data.secure_url});
+      url = response.data.secure_url;
+      console.log(url);
+    })
+    .then(()=>{setUploading(false)})
+    .catch(error=> {console.log('the error ',error)})
+    
+    return url;
   }
 
   return (
@@ -42,6 +84,13 @@ const Signup = () => {
         className='p-4 flex flex-col gap-4 mt-auto' 
         onSubmit={onSubmit}
       >
+
+        <label htmlFor='image' className='self-center'>
+          <img className='inline border-[#006aff] border object-cover w-20 h-20 mr-2 rounded-full' src={imagePreview ||"https://cdn-icons-png.flaticon.com/512/3135/3135715.png"} alt="Profile image"/>
+          <span><HiPlusCircle className='w-6 h-6 translate-x-14 -translate-y-4 text-[#006aff]' /></span>
+          <input type="file" id="image" hidden accept='image/png, image/jpg, image/jpeg' onChange={validateImage} />
+        </label>
+
         <label className='w-full flex justify-between items-center'>
           <span className='mr-2 text-2xl'>Name: </span>
           <input 
@@ -52,6 +101,17 @@ const Signup = () => {
             placeholder="Your Name"
             onChange={onChange('name')}
             required
+          />
+        </label>
+        <label className='w-full flex justify-between items-center'>
+          <span className='mr-2 text-2xl'>About: </span>
+          <input 
+            className="h-8 p-2 border border-[#121213] rounded-lg" 
+            type='text' 
+            name='Name' 
+            value={values.about} 
+            placeholder="Description"
+            onChange={onChange('about')}
           />
         </label>
         <label className='w-full flex justify-between items-center'>

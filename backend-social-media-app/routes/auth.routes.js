@@ -5,6 +5,7 @@ const User = require('../models/user');
 const controller = require('../controllers/auth.controller');
 require('dotenv').config()
 const router = express.Router();
+const {removeFollower, removeFollowing, addFollower, addFollowing, findPeople} = require('../controllers/user.controller')
 
 router.post('/auth/signin',
 	async function(req, res){
@@ -35,6 +36,27 @@ router.get('/auth/signout', function(req, res){
 		message: 'signed out'
 	})
 })
+
+// router.put('/api/users/follow', controller.requireSignin)
+//
+// router.put('/api/users/unfollow', controller.requireSignin)
+
+router.route('/api/users/follow')
+.put(
+	controller.requireSignin,
+	addFollowing,
+	addFollower
+)
+
+router.route('/api/users/unfollow')
+	.put(
+		controller.requireSignin,
+		removeFollowing,
+		removeFollower
+	)
+
+// router.route('/api/users/findpeople/:userId')
+// 	.get(controller.requireSignin, findPeople)
 
 router.route('/api/users/:userId')
 	.get(controller.requireSignin)

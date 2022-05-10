@@ -26,8 +26,8 @@ const Users = () => {
     <div className='w-full flex flex-col gap-2'>
       {
         users.map((item,i)=>(
-          <Link to={'/user/'+item._id} key={"user"+i}>
-            <User name={item.name}/>
+          <Link to={'/user/'+item._id} key={item._id}>
+            <User name={item.name} picture={item.picture}/>
           </Link>
         ))
       }

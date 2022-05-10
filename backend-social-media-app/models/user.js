@@ -24,7 +24,17 @@ const UserSchema = new mongoose.Schema({
 	password: {
 		type: String,
 		required: [true, 'Password is required']
-	}
+	},
+	about: {
+		type: String,
+		trim: true
+	},
+	picture: {
+		type: String,
+		trim: true
+	},
+	following: [{type: mongoose.Schema.ObjectId, ref: 'User'}],
+	followers: [{type: mongoose.Schema.ObjectId, ref: 'User'}]
 });
 
 UserSchema.pre('save', function(next){

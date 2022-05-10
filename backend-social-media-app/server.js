@@ -54,7 +54,9 @@ app.post('/api/users', function(req,res,next){
 		name: body.name,
 		userUpdated: Date.now(),
 		email: body.email,
-		password: body.password
+		password: body.password,
+		picture: body.picture,
+		about: body.about
 	})
 
 	user.save().then(
@@ -68,9 +70,10 @@ app.post('/api/users', function(req,res,next){
 
 //can't get a user without authorization
 app.get('/api/users/:userId',
-
 	function(req,res,next){
 	 User.findById(req.params.userId)
+	 	.populate('following', '_id name')
+		.populate('followers', '_id name')
 		.then(user=>{
 			if(user && controller.requireSignin) {
 				console.log('auth done')
@@ -85,26 +88,38 @@ app.get('/api/users/:userId',
 	}
 )
 
+
+
 //edit user
-app.put('/api/users/:userId/', function(req,res, next){
+app.put('/api/users/:userId/', async function(req, res, next){
 	const body = req.body;
 	const user={
 		name: body.name,
 		userUpdated: Date.now(),
 		email: body.email,
-		password: undefined
+		password: undefined,
+		about: body.about
 	}
-
-	User.findByIdAndUpdate(req.params.userId, user, {new:true})
-	.then(updatedUser => {
-		res.json(updatedUser)
-	})
-	.catch(error=>next(error))
+	try{
+		let user = await User.findByIdAndUpdate(req.params.userId, user, {new:true})
+		.populate('following', '_id name')
+		.populate('followers', '_id name')
+		.exec()
+		if(!user){
+			console.log('error in app.put ')
+			return res.status(400)
+		}
+		res.json(updatedUser);
+	}catch(err){
+		next(err)
+	}
 })
 
 //delete user
 app.delete('/api/users/:userId', function(req,res, next){
 	User.findByIdAndRemove(req.params.userId)
+		.populate('following', '_id name picture')
+		.populate('followers', '_id name picture')
 		.then(result => {res.status(204).end()})
 		.catch(err => next(err))
 })

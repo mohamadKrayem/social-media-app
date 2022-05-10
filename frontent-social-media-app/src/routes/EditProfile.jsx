@@ -1,19 +1,45 @@
-import React,{useState} from 'react';
+import React,{useState, useEffect} from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
 import { authenticate, isAuthenticated } from '../authOperations/authStore';
 import {MdOutlineDone} from 'react-icons/md';
-import { update } from '../operations/apiOperations';
+import { update, read } from '../operations/apiOperations';
+import axios from 'axios';
+import {HiPlusCircle} from 'react-icons/hi';
 
 const EditProfile = () => {
 
   const params = useParams();
+  const [theUser, setUser] = useState({});
+  const [image, setImage] = useState();
+  const [imagePreview, setImagePreview] = useState([]);
+  const [uploading, setUploading] = useState(false)
+
+  useEffect(() => {
+    const abortController = new AbortController();
+    const signal = abortController.signal;
+    const jwt = isAuthenticated();
+
+    read({
+      userId: params.userId
+    }, {t: jwt.token}, signal).then(data=>{
+      if(data && data.error) return ;
+      else {
+        setUser(data)
+        setImagePreview(data.picture)
+      }
+    })
+
+    return function cleanup(){ abortController.abort()}
+  }, [params.userId]);
 
   const [values, setValues] = useState({
     name: '',
     password: '',
     email: '',
     open: false,
-    error: ''
+    error: '',
+    about:'',
+    picture: ''
   });
 
   function onChange(name){
@@ -22,14 +48,47 @@ const EditProfile = () => {
     }
   }
 
-  function onSubmit(e){
+  function validateImage(event){
+    let file = event.target.files[0];
+    if(file.size >= 1048576) return alert("the images's size must be 1mb or less");
+    else {
+      setImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  }
+
+  async function uploadImage(){
+    const data = new FormData();
+    data.append('file', image);
+    data.append('upload_preset', 'xcyamjmn')
+    let url = '';
+
+    setUploading(true);
+    await axios.post("https://api.cloudinary.com/v1_1/dcr7zxnmn/image/upload",
+    data
+    ).then(response => {
+      setValues({...values, picture:response.data.secure_url});
+      url = response.data.secure_url;
+      console.log(url);
+    })
+    .then(()=>{setUploading(false)})
+    .catch(error=> {console.log('the error ',error)})
+    
+    return url;
+  }
+
+  async function onSubmit(e){
     e.preventDefault();
     const jwt = isAuthenticated();
+    const url = await uploadImage();
     const user={
-      name: values.name || undefined,
-      email: values.email || undefined,
-      password: values.password || undefined,
+      name: values.name || theUser.name || undefined,
+      email: values.email || theUser.email || undefined,
+      password: values.password || theUser.password || undefined,
+      picture: url || theUser.picture || undefined,
+      about: values.about || theUser.about || undefined
     };
+    console.log("the about is ",user)
 
     console.log('the jwt',jwt)
 
@@ -51,6 +110,17 @@ const EditProfile = () => {
         className='p-4 flex flex-col gap-4 mt-auto' 
         onSubmit={onSubmit}
       >
+
+        <label htmlFor='image' className='self-center'>
+          <img 
+            className={`inline border-[#006aff] border object-cover w-20 h-20 mr-2 rounded-full ${uploading?'blur-sm':''}`}
+            src={imagePreview ||"https://cdn-icons-png.flaticon.com/512/3135/3135715.png"} 
+            alt="Profile image"
+          />
+          <span><HiPlusCircle className='w-6 h-6 translate-x-14 -translate-y-4 text-[#006aff]' /></span>
+          <input type="file" id="image" hidden accept='image/png, image/jpg, image/jpeg' onChange={validateImage} />
+        </label>
+
         <label className='w-full flex justify-between items-center'>
           <span className='mr-2 text-2xl'>Name: </span>
           <input 
@@ -60,7 +130,17 @@ const EditProfile = () => {
             value={values.name} 
             placeholder="Your Name"
             onChange={onChange('name')}
-            required
+          />
+        </label>
+        <label className='w-full flex justify-between items-center'>
+          <span className='mr-2 text-2xl'>About: </span>
+          <input 
+            className="h-8 p-2 border border-[#121213] rounded-lg" 
+            type='text' 
+            name='Name' 
+            value={values.about} 
+            placeholder="Description"
+            onChange={onChange('about')}
           />
         </label>
         <label className='w-full flex justify-between items-center'>
@@ -72,7 +152,6 @@ const EditProfile = () => {
             value={values.email}
             placeholder="username@example.com"
             onChange={onChange('email')}
-            required
           />
         </label>
         <label className='w-full flex justify-between items-center'>
@@ -84,7 +163,6 @@ const EditProfile = () => {
             value={values.password} 
             onChange={onChange('password')}
             placeholder="***************" 
-            required
           />
         </label>
 

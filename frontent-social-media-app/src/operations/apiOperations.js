@@ -62,4 +62,46 @@ async function remove(params, credentials){
   }
 }
 
-export { list, remove, update, read, create}
+async function follow(params, credentials, followId){
+  let user = {userId: params.userId, followId: followId};
+
+  return await axios.put(`${url}/api/users/follow/`, user, {
+    headers:{
+      'Authorization': 'Bearer ' + credentials.t
+    }
+  }).then(res=>{
+    console.log(res);
+    return res.data;
+  }).catch(err => {
+    console.log('err in the follow operation ',err);
+  })
+}
+
+async function unfollow(params, credentials, unfollowId){
+  let user = {userId: params.userId, unfollowId: unfollowId}
+
+  return await axios.put(`${url}/api/users/unfollow/`, user, {
+    headers: {
+      'Authorization': 'Bearer ' + credentials.t
+    }
+  }).then(res => {
+    console.log(res);
+    return res.data;
+  }).catch(err => {
+    console.log('err in the unfollow operation ',err)
+  })
+}
+
+async function findPeople(params, credentials, signal){
+  return await axios.get(`${url}/api/users/findpeople/${params.userId}`, {
+    headers:{
+      'Authorization': 'Bearer '+ credentials.t
+    }, signal
+  }).then(res => {
+    return res.data;
+  }).catch(err=>{
+    console.log('the error is in the findPeople ',err)
+  })
+}
+
+export { list, remove, update, read, create, follow, unfollow, findPeople }
